@@ -10,10 +10,16 @@ function useLaunches(onSuccessSound, onAbortSound, onFailureSound) {
   const [launches, saveLaunches] = useState([]);
   const [isPendingLaunch, setPendingLaunch] = useState(false);
 
-  const getLaunches = useCallback(async () => {
+const getLaunches = useCallback(async () => {
+  try {
     const fetchedLaunches = await httpGetLaunches();
-    saveLaunches(fetchedLaunches);
-  }, []);
+    console.log("Fetched launches:", fetchedLaunches);  // Debug log to verify fetched launches
+    saveLaunches(fetchedLaunches);  // Save fetched launches to state
+  } catch (error) {
+    console.error("Error fetching launches:", error);  // Log any errors
+  }
+}, []);
+
 
   useEffect(() => {
     getLaunches();
