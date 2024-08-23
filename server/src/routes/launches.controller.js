@@ -4,11 +4,11 @@ const {existLaunchById,
     abortLaunchById,
 } = require("../models/launches.model");
 
-function httpGetAllLaunches(req, res) {
-    return res.status(200).json(getAllLaunches());
+async function httpGetAllLaunches(req, res) {
+    return res.status(200).json(await getAllLaunches());
 };
 
-function httpAddNewLaunches(req, res){
+async function httpAddNewLaunches(req, res){
     const launch = req.body;
     if (!launch.launchDate || !launch.mission || !launch.rocket || !launch.target){
         return res.status(400).json({
@@ -23,21 +23,29 @@ function httpAddNewLaunches(req, res){
         })
     }
 
-    addNewLaunches(launch);
+    await addNewLaunches(launch);
     return res.status(201).json(launch);
 }
 
-function httpAbortLaunch(req, res){
+async function httpAbortLaunch(req, res){
     const launchId = Number(req.params.id);
 
-    if (!existLaunchById(launchId)){
+    if (!(await existLaunchById(launchId))){
         return res.status(404).json({
             error : "Launch not found"
         })
     };
 
-    const aborted = abortLaunchById(launchId);
-    return res.status(200).json(aborted);
+    const aborted = await abortLaunchById(launchId);
+    if(!aborted){
+        return res.status(400).json({
+            error : "Something unexpected happend"
+        })
+    }
+    
+    return res.status(200).json({
+        ok : true
+    });
 }
 
 module.exports = {

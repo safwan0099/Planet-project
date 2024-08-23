@@ -1,6 +1,8 @@
+const launchesDatabase = require("./launches.mongoose");
+const planets = require("./planets.mongoose");
 const launches = new Map();
 
-let currentFlightNumber = 100;
+const DEFUALT_FLIGHT_NUMBER = 100;
 
 const launch = {
     flightNumber : 100,
@@ -13,31 +15,66 @@ const launch = {
     success : true
 };
 
-launches.set(launch.flightNumber, launch);
+saveLaunch(launch);
+// launches.set(launch.flightNumber, launch);
 
-function existLaunchById(launchId){
-    return launches.has(launchId);
+async function saveLaunch(launch) {
+
+    const planet = planets.findOne({
+        flightNumber: launch.flightNumber
+    });
+
+    if(!planet){
+        throw new Error("Planet doesn't exist");
+    }
+
+    return await launchesDatabase.findOneAndUpdate({
+        flightNumber: launch.flightNumber
+    },
+    {
+        $set : launch
+    }, 
+    {
+        upsert: true
+    })};
+
+async function getLatestFlightNumber() {
+    const latestFlightNumber = await launchesDatabase.findOne().sort("-flightNumber");
+
+    if(!latestFlightNumber){
+        return DEFUALT_FLIGHT_NUMBER;
+    }
+    return latestFlightNumber.flightNumber;
 }
 
-function getAllLaunches(){
-    return Array.from(launches.values());
+async function existLaunchById(launchId){
+    return await launchesDatabase.findOne({
+        flightNumber: launchId
+    });
 }
 
-function addNewLaunches(launch) {
-    currentFlightNumber++;
-    launches.set(currentFlightNumber, Object.assign(launch, {
+async function getAllLaunches(){
+   return await launchesDatabase.find({}, {"_id" : 0, "__v" : 0})
+}
+
+async function addNewLaunches(launch) {
+    const currentFlightNumber = await getLatestFlightNumber() + 1;
+    await saveLaunch(Object.assign(launch, {
         flightNumber : currentFlightNumber,
         upcoming: true,
         success: true,
         customer: ["Caesar group inc", "NASA"]
-    }))
+    }));
 }
 
-function abortLaunchById(launchId){
-    const aborted = launches.get(launchId);
-    aborted.upcoming = false;
-    aborted.success = false;
-    return aborted;
+async function abortLaunchById(launchId){
+    const aborted = await launchesDatabase.updateOne({flightNumber: launchId},
+        {
+        upcoming : false,
+        success : false,
+    });
+
+    return aborted.modifiedCount === 1;
 }
 
 module.exports = {
