@@ -58,11 +58,9 @@ async function getLaunchFromApi(){
         console.log(`${launch.flightNumber} ${launch.rocket} ${launch.customers}`)
         await saveLaunch(launch);
     }
-        
 }
 
 async function loadLaunchData(){
-
     const firstSpaceXLaunch = await launchExist({
         flightNumber: 1,
         rocket: "Falcon 1",
@@ -74,7 +72,6 @@ async function loadLaunchData(){
     } else{
         await getLaunchFromApi();
     }
-    
 }
 
 async function saveLaunch(launch) {
